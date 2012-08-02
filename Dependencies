@@ -1,0 +1,21 @@
+HARDWARE
+1. Computer (I used a Mac but this should also work on Windows and Linux)
+2. Microsoft Kinect
+
+SOFTWARE
+1. Install Processing
+processing.org/download/
+2. Download Processing libraries
+-SimpleOpenNI:
+code.google.com/p/simple-openni/
+-FullScreen:
+www.superduper.org/processing/fullscreen_api/
+3. Follow the directions to use Processing code in Eclipse
+processing.org/learning/eclipse/
+4. Download the SWT Library for Eclipse
+www.eclipse.org/swt
+5. Follow the directions to use SWT in Eclipse
+www.eclipse.org/swt/eclipse.php
+
+Now the code should work.
+

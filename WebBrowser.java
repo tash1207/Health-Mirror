@@ -4,16 +4,24 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.browser.*;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import java.util.Calendar;
 
-
+/** This class is in charge of displaying the web browser that appears when the bottom right
+ box is selected and the "Daily Calorie Calculator" Shell that appears when the bottom
+ left box is selected */
+// The browser was originally only going to be used when the bottom right box was selected,
+// but now the browser is used for the top two boxes as well to link to Fitbit and Youtube
 public class WebBrowser {
 	Display display = new Display();
+	// Variables for the bottom right browser
 	final Shell shell = new Shell(display);
 	Browser browser = null;
 	String website = "http://www.simplefitnesssolutions.com/articles/exercise_benefits.htm";
+	// Variables for the bottom left shell
 	Shell cShell = null;
 	ChildShell childShell = new ChildShell(display);
-	
+
+	// The ChildShell inner class creates the "Daily Calorie Calculator" Shell
 	public class ChildShell 
 	  { 
 		int weight = 150;
@@ -31,7 +39,7 @@ public class WebBrowser {
 		
 	     private ChildShell(Display display) 
 	     { 
-	        System.out.println("Creating new child Shell"); 
+	        System.out.println("Creating Daily Calorie Calculator Shell"); 
 	        
 	        // ========================================= 
 	        // Create a Shell (window) from the Display 
@@ -76,6 +84,7 @@ public class WebBrowser {
 	        cShell.open(); 
 	        cShell.setVisible(false);
 	        
+	        // Add functionality to all of the buttons
 	        btnUp.addSelectionListener(new SelectionListener() 
 	        { 
 	           @Override 
@@ -166,23 +175,25 @@ public class WebBrowser {
 	              widgetSelected(e); 
 	           } 
 	        }); 
-	        
 
 	        // ============================================================= 
 	        // Register a listener for the Close event on the child Shell. 
 	        // This disposes the child Shell 
 	        // ============================================================= 
 	        
-	        shell.addListener(SWT.Close, new Listener() 
+	        cShell.addListener(SWT.Close, new Listener() 
 	        { 
 	           @Override 
 	           public void handleEvent(Event event) 
 	           { 
 	              System.out.println("Child Shell handling Close event, about to dispose this Shell"); 
-	              shell.dispose(); 
+	              cShell.dispose(); 
 	           } 
 	        }); 
 	     }
+	     // The following methods are called through the Kinect Application class after the
+	     // user has selected the bottom left corner "Daily Calorie Calculator" and then 
+	     // selects the respective box for increasing height/weight
 	     public void incWeight() {
 	    	 weight+=2;
              lblWeight.setText("Weight = " + weight + " lbs");
@@ -223,8 +234,7 @@ public class WebBrowser {
              calInt + " calories daily \n\n To lose weight, consume: \n " + weightCals
              + " calories daily");
 	     }
-	  } 
-	
+	  } 	
 	
 	public WebBrowser() {
 		
@@ -239,19 +249,78 @@ public class WebBrowser {
 		return shell.getVisible();
 	}
 	
+	public String getWebsite() {
+		return this.website;
+	}
+	// Sets the website for the browser to navigate to
 	public void setWebsite(String website) {
+		shell.setText("Fitness and Diet Articles");
+		shell.setBounds(25, 80, 1220, 888);
+		if (this.website != website) {
+		browser.setUrl(website);
+		this.website = website;
+		}
+	}
+	// Only difference is that the shell title is now "Fitbit Profile" instead of 
+	// "Fitness and Diet Articles"
+	public void setFitbitWebsite(String website) {
+		shell.setText("Fitbit Profile");
+		shell.setBounds(25, 80, 1220, 888);
 		if (this.website != website) {
 		browser.setUrl(website);
 		this.website = website;
 		}
 	}
 	
+	// Uses the Java Calendar class for the day of the week so that a different video will
+	// be played depending on what day it is
+	// NOTE: Youtube displays a minute long ad before the video plays, try to get around that
+	// by using the Google Data API for Youtube.
+	public void setYouTubeBrowser() {
+		Calendar c = Calendar.getInstance();
+		shell.setText("Exercise of the Day");
+		shell.setBounds(570,5,650,590);
+		// I only put three different videos up, but four more can be added for the other
+		// days of the week
+		switch (c.get(Calendar.DAY_OF_WEEK)) {
+		case 3:
+			// Push Ups
+			if (this.website != "http://www.youtube.com/watch?v=Q2Wi3NUhriY#t=03s") {
+			browser.setUrl("http://www.youtube.com/watch?v=Q2Wi3NUhriY#t=03s");
+			this.website = "http://www.youtube.com/watch?v=Q2Wi3NUhriY#t=03s";
+			}
+			break;
+		case 6:
+			// Crunches
+			if (this.website != "http://www.youtube.com/watch?v=1V4RXxLHNCY#t=03s") {
+			browser.setUrl("http://www.youtube.com/watch?v=1V4RXxLHNCY#t=03s");
+			this.website = "http://www.youtube.com/watch?v=1V4RXxLHNCY#t=03s";
+			}
+			break;
+		case 7:
+			// Squats
+			if (this.website != "http://www.youtube.com/watch?v=QKKZ9AGYTi4#t=03s") {
+			browser.setUrl("http://www.youtube.com/watch?v=QKKZ9AGYTi4#t=03s");
+			this.website = "http://www.youtube.com/watch?v=QKKZ9AGYTi4#t=03s";
+			}
+			break;
+		default:
+			// Squats
+			if (this.website != "http://www.youtube.com/watch?v=QKKZ9AGYTi4#t=03s") {
+			browser.setUrl("http://www.youtube.com/watch?v=QKKZ9AGYTi4#t=03s");
+			this.website = "http://www.youtube.com/watch?v=QKKZ9AGYTi4#t=03s";
+			}
+			break;
+		}
+		
+	}
+	
 	public void openBrowser() {
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 3;
+		shell.setText("Fitness and Diet Articles");
 		shell.setLayout(gridLayout);
 		shell.setBounds(25, 80, 1220, 888);
-		// In future allow ints as arguments
 		shell.forceActive();
 		shell.setAlpha(200);
 				
@@ -326,21 +395,5 @@ public class WebBrowser {
 
 		display.dispose();
 	}
-
-	
-	/* public static void main(String [] args) {
-		//PApplet.main(new String[] {"==present", "MyProcessingSketch"});
-		WebBrowser shellBrowser = new WebBrowser();
-		
-		shellBrowser.shell.open();
-		shellBrowser.browser.setUrl("http://www.simplefitnesssolutions.com/articles/exercise_benefits.htm");
-		
-		while (!shellBrowser.shell.isDisposed()) {
-			if (!shellBrowser.display.readAndDispatch())
-				shellBrowser.display.sleep();
-		}
-		shellBrowser.display.dispose();
-		
-		} */
 	
 }

@@ -1,11 +1,9 @@
 import processing.core.*;
 import SimpleOpenNI.*;
 import fullscreen.*;
-//import org.eclipse.swt.*;
-//import org.eclipse.swt.layout.*;
-//import org.eclipse.swt.widgets.*;
-//import org.eclipse.swt.browser.*;
+import java.util.*;
 
+// The Kinect Application code is based on a Processing applet
 public class KinectApplication extends PApplet {
 
 SoftFullScreen fs;
@@ -19,6 +17,7 @@ XnVSelectableSlider2D trackPad;
 int gridX = 9;
 int gridY = 7;
 
+// The following variables pertain to the textboxes in the corners of the application
 String topLeft = "Fitbit";
 int topLeftSize = 185;
 
@@ -98,10 +97,8 @@ public void setup()
   smooth();
   
    // info text
-  println("-------------------------------");  
   println("1. Wave till the tiles get green");  
   println("2. The relative hand movement will select the tiles");  
-  println("-------------------------------");   
   
 }
 
@@ -113,7 +110,7 @@ public void draw()
   // update nite
   context.update(sessionManager);
   
-  // draw depthImageMap
+  // draw rgbImageMap
   image(context.rgbImage(), 0, 0);
   
   trackPadViz.draw();
@@ -142,6 +139,7 @@ public void draw()
   fill(255,225,0);
   text(botRight, botRightX + 12, botRightY, botRightSize - 20, botRightSize - 20);
   
+  // Center Submit Text Box
   fill(100,35,255,200);
   rect(centerX, centerY, centerSize, centerSize);
   fill(255,125,0);
@@ -195,6 +193,9 @@ void onValueChange(float fXValue,float fYValue)
  // println("onValueChange: fXValue=" + fXValue +" fYValue=" + fYValue);
 }
 
+/** This is where the bulk of the code is located because it is called when the user waves
+ * their hand and selects a square on the screen.
+ */
 void onItemSelect(int nXIndex,int nYIndex,int eDir)
 {
   println("onItemSelect: nXIndex=" + nXIndex + " nYIndex=" + nYIndex + " eDir=" + eDir);
@@ -211,26 +212,29 @@ void onItemSelect(int nXIndex,int nYIndex,int eDir)
   if (nXIndex >= 6 && nYIndex >= 4) {
 	  
     botRightBrowser.display.syncExec(new Runnable() {public void run(){
-    // If the botright browser is visible, the top right text box is a back button that
-  	// displays the previous health article
     	if (botRightBrowser.getVisibility(botRightBrowser.shell)) {
-    		if (botRightCounter <= 11 && botRightCounter > 1) {
+            // If the browser is displaying articles, the top right text box is a back button that
+          	// displays the previous health article
+            if (botRightCounter <= 11 && botRightCounter > 1) {
     			botRightCounter--;
     		}
     		else botRightCounter = 1;
             System.out.println(botRightCounter);
             updateWebsite();
         }
-    // If the botleft shell is visible, the top right text box is an increase height button
+    // If the bottom left shell (daily calorie calculator) is visible, the top right text box 
+    //	is an increase height button
     	else if (botRightBrowser.getVisibility(botRightBrowser.cShell)) {
     		botRightBrowser.childShell.incHeight();
     	}
     // If no other windows are open, a browser will be opened with an exercise video
     	else {
-    		topRight = "This corner will link to a different YouTube video detailing how an " +
-    				"exercise can be done depending on the day of the week";
-    	    topRightX = 206;
-    	    topRightSize = 400;
+    		//Calendar rightNow = Calendar.getInstance();
+    		topLeft = "Close YouTube Video";
+    	    // topRightX = 206;
+    	    // topRightSize = 400;
+    		botRightBrowser.setYouTubeBrowser();
+    		botRightBrowser.setVisibility(botRightBrowser.shell, true);
     	    }
     }
     });
@@ -238,7 +242,8 @@ void onItemSelect(int nXIndex,int nYIndex,int eDir)
   // BOTTOM RIGHT CORNER IS SELECTED
   else if (nXIndex >=6 && nYIndex <=2) {
 	  botRightBrowser.display.syncExec(new Runnable() {public void run(){
-	// If botleft shell is visible, this text box is a decrease height button
+	// If bottom left shell (daily calorie calculator) is visible, this text box 
+	// is a decrease height button
 	  if (botRightBrowser.getVisibility(botRightBrowser.cShell)) {
   		botRightBrowser.childShell.decHeight();
   	}
@@ -246,9 +251,6 @@ void onItemSelect(int nXIndex,int nYIndex,int eDir)
 	  else {  
 	browserReset("cShell");
     botRight = "This corner will open fitness and health articles in a browser";
-    //botRightX = 206;
-    //botRightY = 62;
-    //botRightSize = 400;
     
     	if (botRightBrowser.getVisibility(botRightBrowser.shell)) {
     		if (botRightCounter < 11) {
@@ -264,43 +266,57 @@ void onItemSelect(int nXIndex,int nYIndex,int eDir)
   // TOP LEFT CORNER IS SELECTED
   else if (nXIndex <= 2 && nYIndex >=4) {
 	  botRightBrowser.display.syncExec(new Runnable() {public void run(){
-		  // If botleft shell is open, this is an increase weight button
+		  // If daily calorie calculator shell is open, this is an increase weight button
 		  if (botRightBrowser.getVisibility(botRightBrowser.cShell)) {
 	  		botRightBrowser.childShell.incWeight();
 	  	}
-		// If browser is open, this closes the browser
+		// If browser is open and set to fitbit activities, this changes it to fitbit foods
 		  else if (botRightBrowser.getVisibility(botRightBrowser.shell)) {
+			  if (botRightBrowser.getWebsite() == "http://www.fitbit.com/user/22S9ZX/activities") {
+				  botRightBrowser.setFitbitWebsite("http://www.fitbit.com/user/22S9ZX/foods");
+				  botRightBrowser.setVisibility(botRightBrowser.shell, true);
+			  }
+			  // If browser is open and set to Youtube or health articles, this closes the browser
+			  else {
+			  updateWebsite();
 			  browserReset();
+			  }
 		  }
-		  // If no other windows are open, this text box links to the Fitbit API
+		  // If no other windows are open, this text box links to the user's Fitbit profile
 		  else {
 	browserReset();  
     topLeft = "This is where recent foods and activities will be pulled from Fitbit";
     topLeftSize = 400;
+    botRightBrowser.setFitbitWebsite("http://www.fitbit.com/user/22S9ZX/foods");
+    botRightBrowser.setVisibility(botRightBrowser.shell, true);
 		  }
 	  }});
   }
   // BOTTOM LEFT CORNER IS SELECTED
   else if (nXIndex <=2 && nYIndex <=2) {
 	  botRightBrowser.display.syncExec(new Runnable() {public void run(){
-		  // If botleft shell is open, this is an increase weight button
+		  // If daily calorie calculator shell is open, this is an increase weight button
 		  if (botRightBrowser.getVisibility(botRightBrowser.cShell)) {
 	  		botRightBrowser.childShell.decWeight();
 	  	}
-		  // If browser is open, this closes the browser
 		  else if (botRightBrowser.getVisibility(botRightBrowser.shell)) {
-			  browserReset();
+			// If the browser is currently displaying Fitbit foods, now display activities
+	            if (botRightBrowser.getWebsite().equals("http://www.fitbit.com/user/22S9ZX/foods")) {
+	            	//set website to activities
+	            	botRightBrowser.setFitbitWebsite("http://www.fitbit.com/user/22S9ZX/activities");
+	                botRightBrowser.setVisibility(botRightBrowser.shell, true);
+	            }
+	            // If browser is open to health articles, this closes the browser
+	            else {browserReset();}
     }
-		  // If nothing else is open, this becomes the daily calorie calculator
+		  // If nothing else is open, this opens the daily calorie calculator
 		  else {
 			  //browserReset("shell");
-			    botLeft = "User inputs their height/weight and presses submit \n " +
-			    		"Determine how many calories the user should consume daily to lose weight \n" +
-			    		"Decrease Weight";
-			    //botLeftY = 62;
-			    //botLeftSize = 400;
+			    botLeft = "Decrease Weight";
 			    centerSize = 185;
-			    center = "Submit";
+			    center = "User inputs their height/weight then presses this box to " +
+			    		"determine how many calories they should consume daily to lose weight \n" +
+			    		"Submit";
 			    topLeft = "Increase Weight";
 			    topRight = "Increase Height";
 			    botRight = "Decrease Height";
@@ -312,7 +328,7 @@ void onItemSelect(int nXIndex,int nYIndex,int eDir)
   // CENTER SUBMIT BUTTON IS SELECTED
   else if (nXIndex >= 3 && nXIndex <= 5 && nYIndex >= 2 && nYIndex <= 4) {
    botRightBrowser.display.syncExec(new Runnable() {public void run(){
-		  // If botleft shell is open, this is a submit button
+		  // If daily calorie calculator shell is open, this is a submit button
 		  if (botRightBrowser.getVisibility(botRightBrowser.cShell)) {
 	  		botRightBrowser.childShell.centerSubmit();
 	  	}
@@ -321,14 +337,14 @@ void onItemSelect(int nXIndex,int nYIndex,int eDir)
   }
 }});
    }
-  // IF ANY SQUARE THAT IS NOT A TEXT BOX IS SELECTED:
+  // IF ANY SQUARE THAT IS NOT A COLORED TEXT BOX IS SELECTED:
   else {
 	  browserReset();
 	  textReset();
 	  sizeReset();
   }
 }
-
+// Reset all textboxes to the main menu text
 void textReset() {
   topLeft = "Fitbit";
   topRight = "Exercise of the Day";
@@ -336,7 +352,7 @@ void textReset() {
   botRight = "Fitness and Diet Articles";
   center = "";
 }
-
+// Reset all textboxes to the main menu size
 void sizeReset() {
   topLeftSize = 185;
   topRightSize = 185;
@@ -351,7 +367,7 @@ void sizeReset() {
   botRightX = 421;
   botRightY = 277;
 }
-
+// Hide all open browsers and shells
 void browserReset() {
 	botRightBrowser.display.syncExec(new Runnable() {public void run(){
         botRightBrowser.setVisibility(botRightBrowser.shell, false);
@@ -359,6 +375,9 @@ void browserReset() {
     }
   });
 }
+// Hide a particular browser or shell
+// "shell" for the browser
+// "cShell" for the daily calorie calculator
 void browserReset(final String sh) {
 	botRightBrowser.display.syncExec(new Runnable() {public void run(){
 		if (sh == "shell") {
@@ -371,7 +390,8 @@ void browserReset(final String sh) {
     }
   });
 }
-
+// Updates website based on a counter to determine which website should be displayed when the
+// user cycles back and forth through health articles
 void updateWebsite() {
 	botRightBrowser.display.syncExec(new Runnable() {public void run(){
 	switch (botRightCounter) {
@@ -430,6 +450,8 @@ void updateWebsite() {
 });
 }
 
+// THE FOLLOWING CODE REMAINS UNCHANGED FROM THE "SLIDER2D" SIMPLEOPENNI DEMO EXAMPLE 
+// WHICH THE KINECT APPLICATION CODE IS BASED OFF 
 void onPrimaryPointCreate(XnVHandPointContext pContext,XnPoint3D ptFocus)
 {
   println("onPrimaryPointCreate");
